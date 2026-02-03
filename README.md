@@ -86,7 +86,7 @@ The system uses **DC motors with H-Bridge (L293D)** for fertilizer mixers and re
 
 ## Project Structure
 Smart_Irrigation_Project/
-├── [main.ino.txt](https://github.com/user-attachments/files/25046752/main.ino.txt) # Arduino code
+├── file:///C:/Users/asus/Desktop/%D8%A7%D9%84%D9%81%D8%B5%D9%84%20%D8%A7%D9%84%D8%A7%D9%88%D9%84/rayan_project1.ino # Arduino code
 ├── README.md # Project description and instructions
 ├── LICENSE # MIT License
 ├── .gitignore # Ignore unnecessary files
@@ -108,5 +108,4 @@ yaml
 ## License
 This project is licensed under the MIT License – see LICENSE file for details.
 
-[main.ino.txt](https://github.com/user-attachments/files/25046752/main.ino.txt)
-
+file:///C:/Users/asus/Desktop/%D8%A7%D9%84%D9%81%D8%B5%D9%84%20%D8%A7%D9%84%D8%A7%D9%88%D9%84/rayan_project1.ino
