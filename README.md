@@ -89,7 +89,8 @@ Smart_Irrigation_Project/
 
 
 
-  # Arduino code [Uploading#include <LiquidCrystal_I2C.h>
+  # Arduino code 
+            #include <LiquidCrystal_I2C.h>
 
 // LCD
 LiquidCrystal_I2C lcd(0x27,16,2); 
@@ -296,7 +297,6 @@ void stopAll(){
   mixStep = 0;
 }
 
- rayangit.ino…]()
 
 ├── README.md # Project description and instructions
 ├── LICENSE # MIT License
