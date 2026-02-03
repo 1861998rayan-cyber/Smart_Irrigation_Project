@@ -1,211 +1,112 @@
-#include <LiquidCrystal_I2C.h>
+# Smart_Irrigation_Project
+Arduino-based automated irrigation and fertilization system using sensors to optimize water and fertilizer usage.
 
-// ---------------- LCD ----------------
-LiquidCrystal_I2C lcd(0x27,16,2); // عنوان LCD
+## Overview
+This is an **Arduino-based smart irrigation system** that monitors soil moisture, pH (simulated), temperature, and gas levels to control water and fertilizer pumps automatically.  
 
-// ---------------- Sensor Pins ----------------
-const int soilPin = A0; // Soil Moisture
-const int potPin  = A1; // Potentiometer لمحاكاة pH
-const int tempPin = A2; // Temp Sensor لمحاكاة حرارة
-const int gasPin  = A3; // Gas Sensor
+The system uses **DC motors with H-Bridge (L293D)** for fertilizer mixers and relays for water and fertilizer pumps. It provides **real-time feedback on an LCD** and ensures efficient resource use.
 
-// ---------------- DC Motors via L293D ----------------
-// Mixer 1
-const int EN1 = 5; // PWM
-const int IN1 = 6;
-const int IN2 = 7;
+---
 
-// Mixer 2
-const int EN2 = 3; // PWM
-const int IN3 = 2;
-const int IN4 = 4;
+## Features
+- Automatic irrigation based on soil moisture levels.
+- Fertilizer mixing with two separate DC motors.
+- Real-time LCD display of:
+  - Soil moisture
+  - pH value
+  - Gas sensor readings
+  - System state (IDLE, IRRIGATING, FERT1, FERT2)
+- Adjustable moisture and pH thresholds.
+- Non-blocking code using `millis()` for smooth operation.
+- Expandable for IoT or remote monitoring.
 
-// ---------------- Relays ----------------
-const int relayFert1 = 9;
-const int relayWater = 8;
-const int relayFert2 = 10;
+---
 
-// ---------------- Thresholds ----------------
-int dryMoisture = 40;
-int wetMoisture = 60;
-float pH_low = 6.5;
-float pH_high = 7.5;
-int gasThreshold = 500;
+## Components
+- Arduino Uno (or compatible board)
+- Soil Moisture Sensor
+- Potentiometer (simulated pH)
+- Temperature sensor (simulated)
+- Gas sensor (simulated)
+- 2 x DC Motors (for mixers)
+- 2 x L293D H-Bridge modules
+- 3 x Relays (Water and Fertilizer pumps)
+- LiquidCrystal I2C (16x2) Display
+- Jumper wires & breadboard
+- 12V Power supply (for motors)
+- LEDs (optional for indicators)
 
-// ---------------- Variables ----------------
-int soilVal, gasVal, potVal, tempVal;
-float pHVal;
+---
 
-// ---------------- System State ----------------
-enum SystemState {IDLE, IRRIGATING, FERT1, FERT2};
-SystemState state = IDLE;
+## Circuit Connections
 
-// ---------------- Timer for LCD ----------------
-unsigned long previousLCD = 0;
-const long intervalLCD = 500; // تحديث LCD كل نصف ثانية
+**Water Pump Relay**  
+- `relayWater` → Controls irrigation pump  
 
-// ---------------- Timer for Mixing ----------------
-unsigned long mixStart = 0;
-const unsigned long mixDuration = 10000; // 10 ثواني لكل مرحلة
-int mixStep = 0; // 0 = متوقف، 1 = forward، 2 = reverse
+**Fertilizer Pumps**  
+- `relayFert1` → Fertilizer Pump 1  
+- `relayFert2` → Fertilizer Pump 2  
 
-// ---------------- Setup ----------------
-void setup() {
-  lcd.init();
-  lcd.backlight();
-  
-  // Motor pins
-  pinMode(EN1, OUTPUT);
-  pinMode(IN1, OUTPUT);
-  pinMode(IN2, OUTPUT);
-  pinMode(EN2, OUTPUT);
-  pinMode(IN3, OUTPUT);
-  pinMode(IN4, OUTPUT);
+**DC Motors (Mixers)**  
+- Mixer 1: `EN1`, `IN1`, `IN2`  
+- Mixer 2: `EN2`, `IN3`, `IN4`  
 
-  // Relay pins
-  pinMode(relayFert1, OUTPUT);
-  pinMode(relayFert2, OUTPUT);
-  pinMode(relayWater, OUTPUT);
+**Sensors**  
+- A0 → Soil Moisture  
+- A1 → Potentiometer (pH simulation)  
+- A2 → Temperature  
+- A3 → Gas  
 
-  stopAll(); // تأكد من إيقاف كل الأجهزة عند التشغيل
-}
+---
 
-// ---------------- Loop ----------------
-void loop() {
-  readSensors();
-  updateLCD();
-  controlIrrigation();
-  controlFertilization();
-  handleMixing(); // التحكم بالموتورات بدون توقف
-}
+## How It Works
+1. **Sensor Reading:** Continuously reads soil moisture, pH, temperature, and gas levels.  
+2. **Irrigation Control:**  
+   - If soil moisture < `dryMoisture` → Water pump turns ON.  
+   - If soil moisture ≥ `wetMoisture` → Water pump turns OFF.  
+3. **Fertilization Control:**  
+   - If pH < `pH_low` or gas < `gasThreshold` → Fertilizer 1 starts.  
+   - If pH > `pH_high` → Fertilizer 2 starts.  
+   - Mixers operate forward for 10 seconds, then reverse to complete mixing.  
+4. **Display:** LCD shows soil moisture, pH, gas, and system state.  
+5. **Non-blocking Operation:** Uses `millis()` timers to allow simultaneous sensor reading, motor operation, and display updates.
 
-// ---------------- Sensor Reading ----------------
-void readSensors(){
-  soilVal = map(analogRead(soilPin),0,1023,0,100);
-  tempVal = analogRead(tempPin);
-  gasVal = analogRead(gasPin);
-  potVal = analogRead(potPin);
+---
 
-  // حساب pH باستخدام Potentiometer و Temp
-  float voltage = potVal * 5.0 / 1023.0;
-  float tempC = map(tempVal,0,1023,0,50);
-  float slope = (0.0591 * tempC / 25.0);
-  float E_ref = 2.5;
-  pHVal = 7 - (voltage - E_ref)/slope;
-}
+## Thresholds
+- Dry Moisture: 40%  
+- Wet Moisture: 60%  
+- pH Low: 6.5  
+- pH High: 7.5  
+- Gas Threshold: 500  
 
-// ---------------- LCD Update ----------------
-void updateLCD(){
-  unsigned long currentMillis = millis();
-  if(currentMillis - previousLCD >= intervalLCD){
-    previousLCD = currentMillis;
-    lcd.setCursor(0,0);
-    lcd.print("Moist:");
-    lcd.print(soilVal);
-    lcd.print("% pH:");
-    lcd.print(pHVal,1);
+> These values can be adjusted in the Arduino code for different plants or soil conditions.
 
-    lcd.setCursor(0,1);
-    lcd.print("Gas:");
-    lcd.print(gasVal);
-    lcd.print(" State:");
-    switch(state){
-      case IDLE: lcd.print("IDLE  "); break;
-      case IRRIGATING: lcd.print("IRRIG "); break;
-      case FERT1: lcd.print("FERT1 "); break;
-      case FERT2: lcd.print("FERT2 "); break;
-    }
-  }
-}
+---
 
-// ---------------- Irrigation Control ----------------
-void controlIrrigation(){
-  if(soilVal < dryMoisture){
-    digitalWrite(relayWater,HIGH); // تشغيل الريليه
-    state = IRRIGATING;
-  } else if(soilVal >= wetMoisture){
-    digitalWrite(relayWater,LOW); // إيقاف الريليه
-    if(state == IRRIGATING) state = IDLE;
-  }
-}
+## Project Structure
+Smart_Irrigation_Project/
+├── [main.ino.txt](https://github.com/user-attachments/files/25046752/main.ino.txt) # Arduino code
+├── README.md # Project description and instructions
+├── LICENSE # MIT License
+├── .gitignore # Ignore unnecessary files
+└── Circuit_Diagram.jpg <img width="1487" height="757" alt="image" src="https://github.com/user-attachments/assets/b66e832a-4d95-4c17-bedf-2b2add71c300" />
+# Optional schematic image
 
-// ---------------- Fertilization Control ----------------
-void controlFertilization(){
-  if(state != IRRIGATING && mixStep == 0){
-    if(pHVal < pH_low || gasVal < gasThreshold){
-      digitalWrite(relayFert1,HIGH);
-      state = FERT1;
-      mixStep = 1; // المرحلة الأمامية لموتور 1
-      mixStart = millis();
-    } 
-    else if(pHVal > pH_high){
-      digitalWrite(relayFert2,HIGH);
-      state = FERT2;
-      mixStep = 1; // المرحلة الأمامية لموتور 2
-      mixStart = millis();
-    } 
-    else {
-      stopAll();
-      state = IDLE;
-    }
-  }
-}
+yaml
 
-// ---------------- Mixing Handler ----------------
-void handleMixing(){
-  unsigned long currentMillis = millis();
+---
 
-  if(state == FERT1){
-    if(mixStep == 1 && currentMillis - mixStart < mixDuration){
-      analogWrite(EN1, 204); 
-      digitalWrite(IN1,HIGH);
-      digitalWrite(IN2,LOW);
-    }
-    else if(mixStep == 1 && currentMillis - mixStart >= mixDuration){
-      mixStart = currentMillis;
-      mixStep = 2;
-      digitalWrite(IN1,LOW);
-      digitalWrite(IN2,HIGH);
-    }
-    else if(mixStep == 2 && currentMillis - mixStart >= mixDuration){
-      analogWrite(EN1,0);
-      digitalWrite(IN1,LOW);
-      digitalWrite(IN2,LOW);
-      digitalWrite(relayFert1,LOW);
-      mixStep = 0;
-      state = IDLE;
-    }
-  }
+## Notes
+- Ensure the 12V power supply matches motor specifications.
+- Relays are active HIGH (ON when pin HIGH). Adjust if using different relay modules.
+- PWM values (analogWrite) can be adjusted to control motor speed.
+- Expandable for IoT monitoring or mobile notifications.
 
-  else if(state == FERT2){
-    if(mixStep == 1 && currentMillis - mixStart < mixDuration){
-      analogWrite(EN2, 128);
-      digitalWrite(IN3,HIGH);
-      digitalWrite(IN4,LOW);
-    }
-    else if(mixStep == 1 && currentMillis - mixStart >= mixDuration){
-      mixStart = currentMillis;
-      mixStep = 2;
-      digitalWrite(IN3,LOW);
-      digitalWrite(IN4,HIGH);
-    }
-    else if(mixStep == 2 && currentMillis - mixStart >= mixDuration){
-      analogWrite(EN2,0);
-      digitalWrite(IN3,LOW);
-      digitalWrite(IN4,LOW);
-      digitalWrite(relayFert2,LOW);
-      mixStep = 0;
-      state = IDLE;
-    }
-  }
-}
+---
 
-// ---------------- Stop All Devices ----------------
-void stopAll(){
-  digitalWrite(relayFert1,LOW);
-  digitalWrite(relayFert2,LOW);
-  digitalWrite(relayWater,LOW);
-  analogWrite(EN1,0);
-  analogWrite(EN2,0);
-  mixStep = 0;
-}
+## License
+This project is licensed under the MIT License – see LICENSE file for details.
+
+[main.ino.txt](https://github.com/user-attachments/files/25046752/main.ino.txt)
+
