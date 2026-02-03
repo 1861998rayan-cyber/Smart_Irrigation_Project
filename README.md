@@ -89,9 +89,7 @@ Smart_Irrigation_Project/
 
 
 
-  # Arduino code 
-            #include <LiquidCrystal_I2C.h>
-
+  # Arduino code
 // LCD
 LiquidCrystal_I2C lcd(0x27,16,2); 
 
