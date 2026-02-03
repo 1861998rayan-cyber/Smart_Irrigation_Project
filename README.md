@@ -86,7 +86,10 @@ The system uses **DC motors with H-Bridge (L293D)** for fertilizer mixers and re
 
 ## Project Structure
 Smart_Irrigation_Project/
-#include <LiquidCrystal_I2C.h>
+
+
+
+  # Arduino code [Uploading#include <LiquidCrystal_I2C.h>
 
 // LCD
 LiquidCrystal_I2C lcd(0x27,16,2); 
@@ -293,7 +296,8 @@ void stopAll(){
   mixStep = 0;
 }
 
-                # Arduino code
+ rayangit.ino…]()
+
 ├── README.md # Project description and instructions
 ├── LICENSE # MIT License
 ├── .gitignore # Ignore unnecessary files
